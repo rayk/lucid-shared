@@ -1,0 +1,12 @@
+# Generated protobuf code (regenerate with scripts)
+generated/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

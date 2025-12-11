@@ -1,0 +1,126 @@
+// SchemeServer WebSocket message definitions
+// These are shared between Flutter (Dart) and Python backends
+// Used for AI Agent communication via Google Agent Development Kit
+
+syntax = "proto3";
+
+package schemeserver.v1;
+
+option java_multiple_files = true;
+option java_package = "io.lucid.schemeserver.v1";
+
+// Envelope wrapping all WebSocket messages
+message Envelope {
+  // Unique message ID for tracking
+  string message_id = 1;
+
+  // Timestamp in milliseconds since epoch
+  int64 timestamp = 2;
+
+  // The actual message payload
+  oneof payload {
+    // Client -> Server messages
+    PingRequest ping = 10;
+    AuthenticateRequest authenticate = 11;
+    AgentRequest agent_request = 12;
+
+    // Server -> Client messages
+    PongResponse pong = 20;
+    AuthenticateResponse authenticate_response = 21;
+    ErrorResponse error = 22;
+    AgentResponse agent_response = 23;
+    AgentStreamChunk agent_stream_chunk = 24;
+
+    // Bidirectional messages
+    DataUpdate data_update = 30;
+  }
+}
+
+// Ping request to keep connection alive
+message PingRequest {
+  int64 client_timestamp = 1;
+}
+
+// Pong response to ping
+message PongResponse {
+  int64 client_timestamp = 1;
+  int64 server_timestamp = 2;
+}
+
+// Authentication request
+message AuthenticateRequest {
+  string token = 1;
+  map<string, string> metadata = 2;
+}
+
+// Authentication response
+message AuthenticateResponse {
+  bool success = 1;
+  string user_id = 2;
+  string session_id = 3;
+  string error_message = 4;
+}
+
+// Generic error response
+message ErrorResponse {
+  int32 code = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+// Request to an AI agent
+message AgentRequest {
+  string agent_id = 1;
+  string session_id = 2;
+  string user_message = 3;
+  map<string, string> context = 4;
+  bool stream_response = 5;
+}
+
+// Complete response from an AI agent
+message AgentResponse {
+  string agent_id = 1;
+  string session_id = 2;
+  string response_text = 3;
+  repeated ToolCall tool_calls = 4;
+  AgentStatus status = 5;
+}
+
+// Streaming chunk from an AI agent
+message AgentStreamChunk {
+  string agent_id = 1;
+  string session_id = 2;
+  string chunk_text = 3;
+  bool is_final = 4;
+  int32 chunk_index = 5;
+}
+
+// Tool call made by an agent
+message ToolCall {
+  string tool_name = 1;
+  string tool_input = 2;  // JSON string
+  string tool_output = 3;  // JSON string
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_PROCESSING = 1;
+  AGENT_STATUS_COMPLETED = 2;
+  AGENT_STATUS_ERROR = 3;
+  AGENT_STATUS_WAITING_FOR_INPUT = 4;
+}
+
+// Generic data update message
+message DataUpdate {
+  string entity_type = 1;
+  string entity_id = 2;
+  UpdateAction action = 3;
+  bytes data = 4;  // Serialized entity-specific protobuf
+}
+
+enum UpdateAction {
+  UPDATE_ACTION_UNSPECIFIED = 0;
+  UPDATE_ACTION_CREATE = 1;
+  UPDATE_ACTION_UPDATE = 2;
+  UPDATE_ACTION_DELETE = 3;
+}
